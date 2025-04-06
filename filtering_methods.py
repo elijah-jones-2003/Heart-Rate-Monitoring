@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pywt
 from scipy.signal import butter, filtfilt, iirnotch
 from sklearn.decomposition import PCA
-
+from scipy.signal import savgol_filter
 
 def bandpass_filter(signal, lowcut=0.5, highcut=40, fs=360, order=2):
    nyquist = 0.5 * fs
@@ -25,13 +25,4 @@ def notch_filter(signal, freq=50, fs=360, quality_factor=30):
     w0 = freq / nyquist
     b, a = iirnotch(w0, quality_factor)
     return filtfilt(b, a, signal)
-
-def PCAdenoise(signal, components):
-    pca = PCA(n_components=0.99)
-    transformed_ecg = pca.fit_transform(np.expand_dims(signal, axis=1))
-    reconstructed_ecg = pca.inverse_transform(transformed_ecg).flatten()
-    return reconstructed_ecg
-
-def moving_average(signal, window_size=5):
-    return np.convolve(signal, np.ones(window_size)/window_size, mode='same')
 
