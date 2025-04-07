@@ -15,7 +15,7 @@ def bandpass_filter(signal, lowcut=0.5, highcut=40, fs=360, order=2):
    filtered_signal = filtfilt(b, a, signal)
    return filtered_signal
 
-def wavelet_denoise(signal, wavelet='db6', level=3):
+def wavelet_denoise(signal, wavelet='sym4', level=3):
     coeffs = pywt.wavedec(signal, wavelet, level=level)
     coeffs[1:] = [pywt.threshold(c, np.std(c) * 0.4, mode='soft') for c in coeffs[1:]]
     return pywt.waverec(coeffs, wavelet)
