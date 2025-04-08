@@ -44,7 +44,7 @@ dataset_directory = 'mit-bih-arrhythmia-database-1.0.0/'
 # Load ECG signals and annotations
 signals, info = wfdb.io.rdsamp(osj(dataset_directory, str(100))) 
 annotation = wfdb.rdann(dataset_directory + str(100), "atr")
-unfiltered = signals[:, 0][:300]
+unfiltered = signals[:, 0][100:150]
 annotations = annotation
 
 # Map normalization names to functions.
@@ -55,43 +55,40 @@ norm_methods = {
     'Min-Max': normalize_minmax
 }
 
-# List of tuples for the signal processing methods and whether to apply notch filtering
-# Each tuple: (Display Name, processing function, notch_flag)
-signal_variants = [
-    ('Unfiltered', lambda x: x, False),
-    ('Unfiltered', lambda x: x, True),
-    ('Bandpass', bandpass_filter, False),
-    ('Bandpass', bandpass_filter, True),
-    ('Wavelet', wavelet_denoise, False),
-    ('Wavelet', wavelet_denoise, True)
-]
+wavelet = wavelet_denoise(unfiltered)
+wavelet_notch = notch_filter(wavelet)
+
+colors = {
+    'Unfiltered (No Notch)': 'blue',
+    'Unfiltered (With Notch)': 'lightblue',
+    'Wavelet (No Notch)': 'red',
+    'Wavelet (With Notch)': 'salmon'
+}
 
 
-# Loop through each normalization method and signal processing variant (18 combinations)
-for norm_name, norm_func in norm_methods.items():
-    for sig_name, proc_func, use_notch in signal_variants:
-        
-        # Process the signal using the selected processing method
-        processed = proc_func(unfiltered)
-        # Apply the notch filter if flagged
-        if use_notch:
-            processed = notch_filter(processed)
-        # Apply normalization (or leave unnormalised)
-        processed = norm_func(processed)
-        
-        # Create a new figure for each combination
-        plt.figure(figsize=(6, 4))
-        plt.plot(processed, color='blue')
-        notch_text = "With Notch" if use_notch else "No Notch"
-        title = f"{sig_name} - {norm_name} Normalisation - {notch_text}"
-        plt.title(title)
-        plt.xlabel("Sample Index")
-        plt.ylabel("Amplitude")
-        plt.grid(True)
-        plt.tight_layout()
-        # plt.show()
 
-        # Saving the graphs
-        filename = f"graphs/{sig_name}_{norm_name.replace(' ', '')}_{'notch' if use_notch else 'nonotch'}.png"
-        plt.savefig(filename)
-        plt.close()
+plt.figure(figsize=(14, 5))
+plt.plot(unfiltered, label='Original (Unfiltered)', color='gray', alpha=0.6)
+plt.plot(wavelet, label='Wavelet Denoised', color='red')
+plt.title("ECG Signal: Wavelet Denoising")
+plt.xlabel("Sample Index")
+plt.ylabel("Amplitude")
+plt.legend(loc='upper right')
+plt.grid(True)
+plt.tight_layout()
+# plt.savefig("wavelet_denoised.png", dpi=300)
+plt.show()
+
+# --- Plot 2: Wavelet Denoising + Notch Filter ---
+plt.figure(figsize=(14, 5))
+plt.plot(unfiltered, label='Original (Unfiltered)', color='gray', alpha=0.6)
+plt.plot(wavelet_notch, label='Wavelet + Notch', color='green')
+plt.title("ECG Signal: Wavelet Denoising + Notch Filter")
+plt.xlabel("Sample Index")
+plt.ylabel("Amplitude")
+plt.legend(loc='upper right')
+plt.grid(True)
+plt.tight_layout()
+#plt.savefig("wavelet_notch.png", dpi=300)
+plt.show()
+
