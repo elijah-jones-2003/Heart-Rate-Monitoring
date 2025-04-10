@@ -16,7 +16,7 @@ def bandpass_filter(signal, lowcut=0.5, highcut=40, fs=360, order=2):
    filtered_signal = filtfilt(b, a, signal)
    return filtered_signal
 
-def wavelet_denoise(signal, wavelet='sym4', level=5):
+def wavelet_denoise(signal, wavelet='sym4', level=4):
     coeffs = pywt.wavedec(signal, wavelet, level=level)
     coeffs[1:] = [pywt.threshold(c, np.std(c) * 0.4, mode='soft') for c in coeffs[1:]]
     return pywt.waverec(coeffs, wavelet)
@@ -33,18 +33,13 @@ def normalize_zscore(data):
     std_val = np.std(data)
     return (data - mean_val) / std_val
 
-def normalize_minmax(data):
-    data_min = np.min(data)
-    data_max = np.max(data)
-    return (data - data_min) / (data_max - data_min)
-
 # Directory where the dataset is stored
 dataset_directory = 'mit-bih-arrhythmia-database-1.0.0/'
 
 # Load ECG signals and annotations
 signals, info = wfdb.io.rdsamp(osj(dataset_directory, str(100))) 
 annotation = wfdb.rdann(dataset_directory + str(100), "atr")
-unfiltered = signals[:, 0][0:300]
+unfiltered = signals[:, 0][50:250]
 annotations = annotation
 
 # Map normalization names to functions.
@@ -52,7 +47,6 @@ annotations = annotation
 norm_methods = {
     'Unnormalised': lambda x: x,
     'Z-score': normalize_zscore,
-    'Min-Max': normalize_minmax
 }
 
 wavelet = wavelet_denoise(unfiltered)
@@ -65,30 +59,31 @@ colors = {
     'Wavelet (With Notch)': 'salmon'
 }
 
+plt.figure(figsize=(14, 8))
 
-
-plt.figure(figsize=(14, 5))
-plt.plot(unfiltered, label='Original (Unfiltered)', color='blue')
-plt.plot(wavelet, label='Wavelet Denoised', color='red')
-# plt.plot(wavelet_denoise2(unfiltered), label='Wavelet Denoised2', color='green')
-plt.title("ECG Signal: Wavelet Denoising")
+# Subplot 1: Level 3 and Level 6
+plt.subplot(2, 1, 1)
+plt.plot(unfiltered, label='Original (Unfiltered)', color='blue', alpha=0.6)
+plt.plot(wavelet_denoise(unfiltered, level=3), label='Denoised - Level 3', color='orange')
+plt.plot(wavelet_denoise(unfiltered, level=6), label='Denoised - Level 6', color='purple')
+plt.title("Wavelet Denoising Comparison - Levels 3 & 6")
 plt.xlabel("Sample Index")
 plt.ylabel("Amplitude")
 plt.legend(loc='upper right')
 plt.grid(True)
-plt.tight_layout()
-# plt.savefig("wavelet_denoised.png", dpi=300)
-plt.show()
 
-plt.figure(figsize=(14, 5))
-plt.plot(unfiltered, label='Original (Unfiltered)', color='blue')
-# plt.plot(wavelet, label='Wavelet Denoised', color='red')
-plt.plot(wavelet_denoise(unfiltered, wavelet="db4", level=3), label='Wavelet Denoised2', color='green')
-plt.title("ECG Signal: Wavelet Denoising")
+# Subplot 2: Level 4 and Level 5
+plt.subplot(2, 1, 2)
+plt.plot(unfiltered, label='Original (Unfiltered)', color='blue', alpha=0.6)
+plt.plot(wavelet_denoise(unfiltered, level=4), label='Denoised - Level 4', color='red')
+plt.plot(wavelet_denoise(unfiltered, level=5), label='Denoised - Level 5', color='green')
+plt.title("Wavelet Denoising Comparison - Levels 4 & 5")
 plt.xlabel("Sample Index")
 plt.ylabel("Amplitude")
 plt.legend(loc='upper right')
 plt.grid(True)
+
 plt.tight_layout()
-# plt.savefig("wavelet_denoised.png", dpi=300)
+
+#plt.savefig("wavelet_denoising_comparison_levels_3_6_4_5.png", dpi=300)
 plt.show()
