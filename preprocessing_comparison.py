@@ -21,6 +21,20 @@ def wavelet_denoise(signal, wavelet='sym4', level=4):
     coeffs[1:] = [pywt.threshold(c, np.std(c) * 0.4, mode='soft') for c in coeffs[1:]]
     return pywt.waverec(coeffs, wavelet)
 
+def wavelet_denoise_swt(signal, wavelet='db4', level=5):
+    coeffs = pywt.swt(signal, wavelet, level=level)
+    
+    # Apply soft thresholding to detail coefficients only
+    thresholded_coeffs = []
+    for approx, detail in coeffs:
+        threshold = np.std(detail) * 0.4
+        detail = pywt.threshold(detail, threshold, mode='soft')
+        thresholded_coeffs.append((approx, detail))
+    
+    # Reconstruct signal from thresholded coefficients
+    denoised_signal = pywt.iswt(thresholded_coeffs, wavelet)
+    return denoised_signal
+
 def notch_filter(signal, freq=50, fs=360, quality_factor=30):
     nyquist = 0.5 * fs
     w0 = freq / nyquist
